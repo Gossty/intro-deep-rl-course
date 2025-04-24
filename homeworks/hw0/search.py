@@ -90,17 +90,87 @@ def depthFirstSearch(problem: SearchProblem) -> List[Directions]:
     print("Start's successors:", problem.getSuccessors(problem.getStartState()))
     """
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    if problem.isGoalState(problem.getStartState()):
+        return []
+    st = util.Stack()
+    st.push((problem.getStartState(), []))
+
+    visited = set()
+    while not st.isEmpty():
+        curr_name, curr_path = st.pop()
+        if curr_name in visited:
+            continue
+        if problem.isGoalState(curr_name):
+            return curr_path
+        visited.add(curr_name)
+
+        neighbors = problem.getSuccessors(curr_name)
+        for neighbor_name, neighbor_action, neighbor_weight in neighbors:
+            if neighbor_name in visited:
+                continue
+            neighbor_path = curr_path.copy()
+            neighbor_path.append(neighbor_action)
+            st.push((neighbor_name, neighbor_path))
+    return []
+
 
 def breadthFirstSearch(problem: SearchProblem) -> List[Directions]:
     """Search the shallowest nodes in the search tree first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    if problem.isGoalState(problem.getStartState()):
+        return []
+    q = util.Queue()
+    q.push((problem.getStartState(), []))
+
+    visited = set()
+    while not q.isEmpty():
+        curr_name, curr_path = q.pop()
+        if curr_name in visited:
+            continue
+        if problem.isGoalState(curr_name):
+            return curr_path
+        visited.add(curr_name)
+
+        neighbors = problem.getSuccessors(curr_name)
+        for neighbor_name, neighbor_action, neighbor_weight in neighbors:
+            if neighbor_name in visited:
+                continue
+            neighbor_path = curr_path.copy()
+            neighbor_path.append(neighbor_action)
+            q.push((neighbor_name, neighbor_path))
+    return []
 
 def uniformCostSearch(problem: SearchProblem) -> List[Directions]:
     """Search the node of least total cost first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    if problem.isGoalState(problem.getStartState()):
+        return []
+    pq = util.PriorityQueue()
+    pq.push((problem.getStartState(), [], 0), 0)
+
+    visited = set()
+
+    while not pq.isEmpty():
+        curr_name, curr_path, curr_weight = pq.pop()
+        if curr_name in visited:
+            continue
+        if problem.isGoalState(curr_name):
+            return curr_path
+        visited.add(curr_name)
+
+        neighbors = problem.getSuccessors(curr_name)
+        for neighbor_name, neighbor_action, neighbor_weight in neighbors:
+            if neighbor_name in visited:
+                continue
+            neighbor_path = curr_path.copy()
+            neighbor_path.append(neighbor_action)
+            action_weight = curr_weight + neighbor_weight
+            pq.update((
+                neighbor_name, neighbor_path, curr_weight + neighbor_weight),
+                action_weight)
+    return []
+
 
 def nullHeuristic(state, problem=None) -> float:
     """
@@ -112,10 +182,43 @@ def nullHeuristic(state, problem=None) -> float:
 def aStarSearch(problem: SearchProblem, heuristic=nullHeuristic) -> List[Directions]:
     """Search the node that has the lowest combined cost and heuristic first."""
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+
+    if problem.isGoalState(problem.getStartState()):
+        return []
+    pq = util.PriorityQueue()
+    start_score = 0 + heuristic(problem.getStartState(), problem)
+    pq.push(problem.getStartState(), start_score)
+
+    gscore = dict()
+    came_from = dict()
+    gscore[problem.getStartState()] = 0
+
+    path_start = None
+    while not pq.isEmpty():
+        curr_name = pq.pop()
+        if problem.isGoalState(curr_name):
+            path_start = curr_name
+            break
+        neighbors = problem.getSuccessors(curr_name)
+        for neighbor_name, neighbor_action, neighbor_weight in neighbors:
+            tentative_gscore = gscore[curr_name] + neighbor_weight
+            if neighbor_name not in gscore:
+                gscore[neighbor_name] = float('inf')
+            if tentative_gscore < gscore[neighbor_name]:
+                gscore[neighbor_name] = tentative_gscore
+                came_from[neighbor_name] = (curr_name, neighbor_action)
+                pq.update(neighbor_name, gscore[neighbor_name] + heuristic(neighbor_name, problem))
+    path = []
+    curr = path_start
+    end = problem.getStartState()
+    while curr != end:
+        curr, action = came_from[curr]
+        path.append(action)
+    return list(reversed(path))
 
 # Abbreviations
 bfs = breadthFirstSearch
 dfs = depthFirstSearch
 astar = aStarSearch
 ucs = uniformCostSearch
+ 
